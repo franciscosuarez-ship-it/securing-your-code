@@ -14,6 +14,15 @@ Please note that this project is released with a [Contributor Code of Conduct][c
 
 There are no prerequisites for running and testing code in this repository.
 
+## Security expectations for contributions
+
+Because this repository is used for security training, many insecure behaviors are intentionally present. When contributing:
+
+1. Keep documentation and code comments explicit about whether behavior is **intentional for training** or **recommended for hardening**.
+2. Do not add real credentials, private keys, API tokens, or production connection strings to the repository (including tests, fixtures, and screenshots).
+3. For security-related pull requests, include rollout impact notes when behavior changes can affect challenge availability or lab operator workflows.
+4. Keep validation and authorization changes consistent with existing route guards/middleware patterns in `server.ts` and clearly describe any new enforcement points.
+
 ## Submitting a pull request
 
 1. [Fork][fork] and clone the repository
