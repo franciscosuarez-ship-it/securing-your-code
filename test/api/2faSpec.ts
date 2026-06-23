@@ -223,6 +223,17 @@ describe('/rest/2fa/status', () => {
     await frisby.get(REST_URL + '/2fa/status')
       .expect('status', 401)
   })
+
+  it('GET should return 401 when auth token is malformed', async () => {
+    // @ts-expect-error FIXME promise return handling broken
+    await frisby.get(REST_URL + '/2fa/status', {
+      headers: {
+        Authorization: 'Bearer invalid.token.value',
+        'content-type': 'application/json'
+      }
+    })
+      .expect('status', 401)
+  })
 })
 
 describe('/rest/2fa/setup', () => {
@@ -353,6 +364,36 @@ describe('/rest/2fa/setup', () => {
             secret,
             type: 'totp_setup_secret_foobar'
           }),
+          initialToken: otplib.authenticator.generate(secret)
+        }
+      })
+      .expect('status', 401)
+  })
+
+  it('POST should fail when setup token signature is invalid', async () => {
+    const email = 'fooooo5@bar.com'
+    const password = '123456'
+    const secret = 'ASDVAJSDUASZGDIADBJS'
+
+    await register({ email, password })
+    const { token } = await login({ email, password })
+
+    const forgedSetupToken = jwt.sign({
+      secret,
+      type: 'totp_setup_secret'
+    }, 'this_surly_isnt_the_right_key')
+
+    // @ts-expect-error FIXME promise return handling broken
+    await frisby.post(
+      REST_URL + '/2fa/setup',
+      {
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'content-type': 'application/json'
+        },
+        body: {
+          password,
+          setupToken: forgedSetupToken,
           initialToken: otplib.authenticator.generate(secret)
         }
       })
