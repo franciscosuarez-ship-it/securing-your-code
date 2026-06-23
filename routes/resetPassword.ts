@@ -15,13 +15,13 @@ const users = require('../data/datacache').users
 const security = require('../lib/insecurity')
 
 module.exports = function resetPassword () {
-  return ({ body, connection }: Request, res: Response, next: NextFunction) => {
-    const email = body.email
-    const answer = body.answer
-    const newPassword = body.new
-    const repeatPassword = body.repeat
+  return ({ body, socket }: Request, res: Response, next: NextFunction) => {
+    const email = typeof body?.email === 'string' ? body.email : undefined
+    const answer = typeof body?.answer === 'string' ? body.answer : undefined
+    const newPassword = typeof body?.new === 'string' ? body.new : undefined
+    const repeatPassword = typeof body?.repeat === 'string' ? body.repeat : undefined
     if (!email || !answer) {
-      next(new Error('Blocked illegal activity by ' + connection.remoteAddress))
+      next(new Error('Blocked illegal activity by ' + socket.remoteAddress))
     } else if (!newPassword || newPassword === 'undefined') {
       res.status(401).send(res.__('Password cannot be empty.'))
     } else if (newPassword !== repeatPassword) {
@@ -37,7 +37,7 @@ module.exports = function resetPassword () {
           UserModel.findByPk(data.UserId).then((user: UserModel | null) => {
             user?.update({ password: newPassword }).then((user: UserModel) => {
               verifySecurityAnswerChallenges(user, answer)
-              res.json({ user })
+              res.json({ status: 'success' })
             }).catch((error: unknown) => {
               next(error)
             })
