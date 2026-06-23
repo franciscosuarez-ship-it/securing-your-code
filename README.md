@@ -18,6 +18,33 @@
 
 See [requirements](_labs/requirements.md) to see what is needed to run this lab.
 
+## Security usage and rollout notes
+
+This repository includes OWASP Juice Shop code for security training. It intentionally contains insecure patterns and challenge-focused behaviors, so treat it as a lab environment and not as a production baseline.
+
+### Current security model (what exists today)
+
+1. **Authentication:** Most protected APIs expect a JWT in `Authorization: Bearer <token>` and are guarded with `security.isAuthorized()` in `server.ts`. Some routes also rely on the `token` cookie via `security.updateAuthenticatedUsers()`.
+2. **Authorization:** Route-level checks are mixed (`isAuthorized()`, `appendUserId()`, `isAccounting()`), so access control is not globally consistent.
+3. **Secrets and keys:** JWT verification reads `encryptionkeys/jwt.pub`, while signing currently uses an embedded private key in `lib/insecurity.ts` (training-only posture).
+4. **Validation and abuse controls:** Validation/sanitization and rate limiting are endpoint-specific (e.g., registration trimming, upload checks, reset-password and 2FA rate limits) rather than centralized.
+5. **Runtime exposure:** Several routes are intentionally exposed for learning/challenges (e.g., `/ftp`, `/encryptionkeys`, `/support/logs`, `/metrics`, `/api-docs`).
+
+### Operational guidance
+
+1. **Do not use real credentials or production secrets** anywhere in this repository, challenge payloads, test data, or config overrides.
+2. **Prefer safe default runtime config** (`config/default.yml` with `challenges.safetyMode: auto`) for demos; only use `config/unsafe.yml` or challenge-heavy profiles in isolated training environments.
+3. **Run behind a controlled boundary** (private network, VPN, or reverse proxy ACLs) when exposing this app beyond localhost.
+4. **Treat uploaded/generated artifacts as sensitive** and avoid publishing logs, backup files, or generated challenge data.
+
+### Migration and hardening rollout (recommended sequence)
+
+1. **Environment profile first:** Move deployments off `unsafe`/`ctf` profiles to default/safer settings so environment-based challenge restrictions are respected.
+2. **Key management next:** Replace embedded signing material with externally managed keys/secrets and rotate any previously shared keys before wider access.
+3. **Edge protection:** Restrict or disable challenge-only endpoints (`/ftp`, `/encryptionkeys`, `/support/logs`, `/metrics`, `/api-docs`) at the ingress layer for non-training audiences.
+4. **Validation/rate-limit pass:** Standardize request validation and rate-limiting across write/authentication endpoints before broader rollout.
+5. **Communication:** Notify lab operators that challenge availability may change after safer profiles and endpoint restrictions are enabled.
+
 ---
 
 ## Workshop Labs
